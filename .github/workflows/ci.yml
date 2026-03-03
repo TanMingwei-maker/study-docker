@@ -36,7 +36,7 @@ jobs:
           context: ./docker-start
           push: true
           # 替换成你自己的 Docker Hub 用户名
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-frontend-app:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/study-frontend:latest
 
       # 5. 构建并推送后端镜像
       - name: Build and push Backend
@@ -45,4 +45,4 @@ jobs:
           context: ./docker-node-demo
           push: true
           # 替换成你自己的 Docker Hub 用户名
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-backend-app:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/study-backend:latest

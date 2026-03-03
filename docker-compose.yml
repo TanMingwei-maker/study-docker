@@ -1,0 +1,77 @@
+version: '3.8'
+
+# services 定义了我们要启动的所有容器
+# 就像在终端里运行多个 docker run 命令
+services:
+  # 服务 1: 前端静态页面 (Nginx)
+  frontend:
+    build:
+      context: ./docker-start
+    ports:
+      - "8080:80"
+    # [Volume 挂载] 将本地代码同步到容器
+    volumes:
+      # 左边是本地路径，右边是容器路径
+      - ./docker-start/index.html:/usr/share/nginx/html/index.html
+    container_name: my-frontend-app
+
+  # 服务 2: 后端 API (Node.js)
+  backend:
+    build:
+      context: ./docker-node-demo
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    # [Volume 挂载] 将本地代码同步到容器
+    volumes:
+      # 1. 挂载当前代码目录到 /app
+      - ./docker-node-demo:/app
+      # 2. 匿名挂载 node_modules，防止被本地覆盖 (非常重要！)
+      # 如果本地 node_modules 和容器内的架构不同 (mac vs linux)，这行能救命
+      - /app/node_modules
+    # [热更新] 使用 nodemon 启动
+    command: npm run dev
+    # 让 backend 等待 db 启动后再启动 (但这只保证 db 容器启动，不保证数据库就绪，生产环境建议用 wait-for-it.sh)
+    depends_on:
+      - db
+    container_name: my-backend-app
+
+  # 服务 3: 数据库 (MySQL)
+  db:
+    # 使用官方 MySQL 镜像 (也可以用 mariadb)
+    # 注意: M1/M2 Mac 推荐使用 mariadb 或 mysql:oracle 因为 mysql:5.7 在 ARM 架构上有兼容性问题
+    # 这里我们用 mysql:8.0，它对 ARM 支持较好
+    image: mysql:8.0
+    # 总是自动重启 (除非手动 stop)
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # 生产环境请用 .env 文件!
+      MYSQL_DATABASE: my_database        # 启动时自动创建的库名
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306" # 允许你在本地用 DBeaver/Navicat 连接
+    # [数据持久化]
+    # 如果不写这个，每次重启容器，数据就丢了！
+    volumes:
+      - db_data:/var/lib/mysql
+    container_name: my-mysql-db
+
+  # 服务 4: 数据库管理工具 (Adminer)
+  # 一个极简的 Web 版数据库管理界面，不用安装任何本地软件
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8081:8080"
+    container_name: my-adminer
+
+# 定义持久化卷
+volumes:
+  db_data:
+
+# 为什么这很酷？
+# 1. 你只需要一个文件就能描述整个系统的架构
+# 2. 只需要一个命令 `docker-compose up` 就能启动所有服务
+# 3. 它们自动在一个内部网络里，可以通过服务名互相访问 (比如 frontend 可以直接 ping backend)

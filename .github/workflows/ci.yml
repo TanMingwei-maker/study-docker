@@ -1,0 +1,48 @@
+name: Docker CI/CD
+
+# 触发条件：当推送到 main 分支时触发
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 设置 Docker Buildx (用于构建多架构镜像，或者单纯为了使用 buildx 的缓存特性)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. 登录到 Docker Hub
+      # 注意：需要在 GitHub 仓库的 Settings -> Secrets and variables -> Actions 中配置
+      # DOCKERHUB_USERNAME 和 DOCKERHUB_TOKEN
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4. 构建并推送前端镜像
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker-start
+          push: true
+          # 替换成你自己的 Docker Hub 用户名
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-frontend-app:latest
+
+      # 5. 构建并推送后端镜像
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker-node-demo
+          push: true
+          # 替换成你自己的 Docker Hub 用户名
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-backend-app:latest

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  frontend:
+    # 生产环境直接拉取构建好的镜像，不再本地构建
+    image: ${DOCKER_USERNAME}/my-frontend-app:latest
+    ports:
+      - "80:80"  # 生产环境通常监听 80/443
+    restart: always
+    container_name: prod-frontend
+
+  # 后端服务
+  backend:
+    image: ${DOCKER_USERNAME}/my-backend-app:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # 数据库连接信息 (生产环境应从 .env 文件读取)
+      - DB_HOST=db
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    restart: always
+    depends_on:
+      - db
+    container_name: prod-backend
+
+  # 数据库服务
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    # 生产环境为了安全，通常不暴露 3306 端口到公网
+    # ports:
+    #   - "3306:3306"
+    volumes:
+      - db_data_prod:/var/lib/mysql
+    container_name: prod-db
+
+volumes:
+  db_data_prod:

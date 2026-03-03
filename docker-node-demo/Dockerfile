@@ -1,5 +1,5 @@
-# 使用华为云镜像源加速
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:18-alpine
+# 使用 Node.js 官方镜像
+FROM node:18-alpine
 
 # 设置工作目录
 # 类似于 cd /app，之后的所有命令都会在这个目录下执行
@@ -14,7 +14,7 @@ COPY package*.json ./
 
 # 安装依赖
 # 建议在生产环境使用 npm ci (clean install)
-RUN npm install --registry=https://registry.npmmirror.com
+RUN npm install
 
 # 复制源代码
 COPY . .

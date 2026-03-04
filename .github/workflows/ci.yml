@@ -16,6 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1.5 设置 QEMU (用于跨平台构建，例如在 x86 机器上构建 ARM 镜像)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       # 2. 设置 Docker Buildx (用于构建多架构镜像，或者单纯为了使用 buildx 的缓存特性)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -35,6 +39,7 @@ jobs:
         with:
           context: ./docker-start
           push: true
+          platforms: linux/amd64,linux/arm64
           # 替换成你自己的 Docker Hub 用户名
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/study-frontend:latest
 
@@ -44,5 +49,6 @@ jobs:
         with:
           context: ./docker-node-demo
           push: true
+          platforms: linux/amd64,linux/arm64
           # 替换成你自己的 Docker Hub 用户名
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/study-backend:latest
